@@ -9,7 +9,8 @@ function NewChat({ chatVisible, setVisible }) {
   const [groupName, setGroupName] = useState("");
   const [groupMembers, setGroupMembers] = useState([]);
 
-  const { contacts, setContacts, chats, setChats } = useContext(ChatContext);
+  const { contacts, setContacts, chats, setChats, setAllMessages } =
+    useContext(ChatContext);
   function handleSubmit(e) {
     e.preventDefault();
     (async () => {
@@ -24,6 +25,7 @@ function NewChat({ chatVisible, setVisible }) {
         server_response = await createChat(groupName, chatType, groupMembers);
       }
       if (server_response.success) {
+        setAllMessages((prev) => ({ ...prev, [server_response.data._id]: [] }));
         server_response = await getAllChats();
         setChats(server_response.data);
       }

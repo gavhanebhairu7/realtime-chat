@@ -37,24 +37,24 @@ function Exporer({ setContactVisible }) {
     getChats();
   }, []);
 
-  useEffect(() => {
-    //set loading true
-    async function getMessages() {
-      setLoading(true);
-      const server_response = await getAllmessages(selectedChat._id);
-      if (server_response.success) {
-        setMessages(server_response.data);
-        setLoading(false);
-      } else {
-        setLoading(false);
-        setError("message could not be fetched");
-      }
-    }
-    if (!selectedChat) {
-      return;
-    }
-    getMessages();
-  }, [selectedChat, selectedChat]);
+  // useEffect(() => {
+  //   //set loading true
+  //   async function getMessages() {
+  //     setLoading(true);
+  //     const server_response = await getAllmessages(selectedChat._id);
+  //     if (server_response.success) {
+  //       setMessages(server_response.data);
+  //       setLoading(false);
+  //     } else {
+  //       setLoading(false);
+  //       setError("message could not be fetched");
+  //     }
+  //   }
+  //   if (!selectedChat) {
+  //     return;
+  //   }
+  //   getMessages();
+  // }, [selectedChat, selectedChat]);
   return (
     <div className="w-[30%] text-white bg-black px-5 overflow-scroll relative">
       <div className="sticky top-0 bg-black z-20 py-2 mt-0">

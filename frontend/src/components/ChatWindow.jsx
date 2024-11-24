@@ -6,13 +6,26 @@ import { UserContext } from "../context/userContext";
 import { ChatContext } from "../context/chatContext";
 import { sendMessage } from "../API/chat";
 import { formatDate } from "../utils/helperFunctions.js";
+import { SocketContext } from "../context/socketContext.jsx";
 function ChatWindow() {
   const { user, setError } = useContext(UserContext);
   const { messages, selectedChat } = useContext(ChatContext);
+  const { onlineUsers } = useContext(SocketContext);
   const [draft, setDraft] = useState("");
+  const [status, setStatus] = useState(false);
   useEffect(() => {
-    console.log("selected Chat: ", selectedChat);
-  }, []);
+    if (selectedChat.chat_type === "group") return;
+    //get user_id
+    const user_id =
+      selectedChat?.participants[0]?._id === user?._id
+        ? selectedChat?.participants[1]?._id
+        : selectedChat?.participants[0]?._id;
+    if (onlineUsers.includes(user_id)) {
+      setStatus(true);
+    } else {
+      setStatus(false);
+    }
+  }, [onlineUsers, selectedChat]);
   function handleSubmit(e) {
     e.preventDefault();
     async function sendMessageAsync(message) {
@@ -38,7 +51,7 @@ function ChatWindow() {
 
           <div className="sticky top-0 z-10 bg-gray-900">
             <div className="flex justify-left items-center py-2 hover:bg-gray-800 duration-700 hover:cursor-pointer w-[100%] pl-2">
-              <div className="avatar offline">
+              <div className={`avatar ${status ? "online" : "offline"}`}>
                 <div className="w-16 rounded-full">
                   <img src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp" />
                 </div>
@@ -48,13 +61,17 @@ function ChatWindow() {
                   {selectedChat?.chat_type === "group" ? (
                     <h1>{selectedChat?.chat_name}</h1>
                   ) : (
-                    <h1 className="font-bold">
-                      {selectedChat?.participants[0]?._id === user?._id
-                        ? selectedChat?.participants[1]?.user_name
-                        : selectedChat?.participants[0]?.user_name}
-                    </h1>
+                    <>
+                      <h1 className="font-bold">
+                        {selectedChat?.participants[0]?._id === user?._id
+                          ? selectedChat?.participants[1]?.user_name
+                          : selectedChat?.participants[0]?.user_name}
+                      </h1>
+                      <span className="text-gray-400">
+                        {status ? "online" : "offline"}
+                      </span>
+                    </>
                   )}
-                  <span className="text-gray-400">online</span>
                 </div>
               )}
             </div>
@@ -62,24 +79,32 @@ function ChatWindow() {
 
           {/* Message window */}
           <div className="flex-1 overflow-y-auto p-5">
-            {messages.map((message, index) =>
-              message.sender._id === user._id ? (
-                <Message
-                  key={index}
-                  sent={true}
-                  msg={message.message_body}
-                  time={message.created_at}
-                  sender={message.sender}
-                />
-              ) : (
-                <Message
-                  key={index}
-                  sent={false}
-                  msg={message.message_body}
-                  time={message.created_at}
-                  sender={message.sender}
-                />
-              )
+            {messages.length > 0 ? (
+              <>
+                {messages.map((message, index) =>
+                  message.sender._id === user._id ? (
+                    <Message
+                      key={index}
+                      sent={true}
+                      msg={message.message_body}
+                      time={message.created_at}
+                      sender={message.sender}
+                    />
+                  ) : (
+                    <Message
+                      key={index}
+                      sent={false}
+                      msg={message.message_body}
+                      time={message.created_at}
+                      sender={message.sender}
+                    />
+                  )
+                )}
+              </>
+            ) : (
+              <div className="text-center flex flex-col justify-center h-[100%]">
+                <div>say Hii !</div>
+              </div>
             )}
           </div>
 

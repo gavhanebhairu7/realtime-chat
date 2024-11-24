@@ -17,6 +17,24 @@ export const getAllChats = async () => {
   }
 };
 
+export const getAllMessagesForChats = async () => {
+  try {
+    const messages = await axios.get(
+      `http://localhost:4001/api/v1/message/messages/all`,
+      {
+        withCredentials: true,
+      }
+    );
+    return messages.data;
+  } catch (err) {
+    console.log(err);
+    return {
+      success: false,
+      error: "cannot send request",
+    };
+  }
+};
+
 export const getAllmessages = async (chat_id) => {
   try {
     const messages = await axios.get(

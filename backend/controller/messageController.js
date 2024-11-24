@@ -2,6 +2,7 @@ import express from "express";
 import { chatModel } from "../model/chatModel.js";
 import { messageModel } from "../model/messageModel.js";
 import { userModel } from "../model/userModel.js";
+import { io, onlineUserIds } from "../SocketIO/socketIO.js";
 const router = express.Router();
 
 router.get("/messages/all", async (req, res) => {
@@ -17,7 +18,8 @@ router.get("/messages/all", async (req, res) => {
         path: "messages",
         populate: {
           path: "sender",
-          select: "user_name", // Populate sender with user_name
+          // Populate sender with user_name
+          select: "_id user_name",
         },
       },
     });
@@ -90,8 +92,8 @@ router.post("/message/:chat_id", async (req, res) => {
       deletedCount: 0,
       message_body: message_body,
     });
-    let db_response = await msg_document.save();
-    if (!db_response) {
+    let msg_response = await msg_document.save();
+    if (!msg_response) {
       return res.status(400).json({
         success: false,
         error: "something went wrong",
@@ -99,8 +101,31 @@ router.post("/message/:chat_id", async (req, res) => {
     }
     //get chat document and add message in chat
     const chat_document = await chatModel.findById(chat_id);
-    chat_document.messages.push(db_response._id);
-    db_response = await chat_document.save();
+    chat_document.messages.push(msg_response._id);
+    let db_response = await chat_document.save();
+    if (!db_response) {
+      return res.status(400).json({
+        success: false,
+        error: "something went wrong",
+      });
+    }
+    msg_response = await messageModel
+      .findById(msg_response._id)
+      .populate("sender", "_id user_name");
+    //notify all participants about the message
+    const { participants } = await chatModel
+      .findById(chat_id)
+      .select("participants");
+    participants.forEach((element) => {
+      //get socket id of user
+      const socketId = onlineUserIds[element];
+      if (socketId) {
+        io.to(socketId).emit("notify-message", {
+          chat_id,
+          message: msg_response,
+        });
+      }
+    });
     return res.status(201).json({
       success: true,
       data: db_response,
